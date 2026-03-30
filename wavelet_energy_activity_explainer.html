@@ -1,0 +1,404 @@
+
+<style>
+  :root { --gap: 12px; }
+  .section { margin: 0 0 1.5rem; }
+  .label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .bold { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 16px; }
+  .row { display: flex; gap: var(--gap); align-items: stretch; }
+  .col { flex: 1; min-width: 0; }
+  .band-bar-wrap { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .band-row { display: flex; align-items: center; gap: 8px; }
+  .band-label { font-size: 11px; color: var(--color-text-secondary); width: 100px; flex-shrink: 0; }
+  .band-track { flex: 1; height: 18px; background: var(--color-background-primary); border-radius: 4px; border: 0.5px solid var(--color-border-tertiary); overflow: hidden; }
+  .band-fill { height: 100%; border-radius: 4px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
+  .band-val { font-size: 11px; color: var(--color-text-secondary); width: 36px; text-align: right; flex-shrink: 0; }
+  .activity-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; transition: all 0.4s; }
+  .signal-canvas { width: 100%; height: 90px; display: block; border-radius: 6px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tab { padding: 5px 14px; font-size: 12px; border-radius: 20px; border: 0.5px solid var(--color-border-secondary); background: transparent; cursor: pointer; color: var(--color-text-secondary); transition: all .2s; }
+  .tab.active { background: var(--color-background-info); color: var(--color-text-info); border-color: var(--color-border-info); }
+  .intuition-box { border-left: 2px solid; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 12px; line-height: 1.6; color: var(--color-text-secondary); margin-top: 8px; }
+  .step-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; margin-bottom: 8px; }
+  .step-num { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 2px; }
+  .step-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .step-desc { font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; line-height: 1.5; }
+  .compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+  .compare-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px; text-align: center; }
+  .compare-title { font-size: 12px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; }
+</style>
+
+<div style="padding: 0.5rem 0;">
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('intuition')">1. The core idea</button>
+    <button class="tab" onclick="showTab('howit')">2. How DWT works</button>
+    <button class="tab" onclick="showTab('energy')">3. Why energy?</button>
+    <button class="tab" onclick="showTab('live')">4. Live demo</button>
+    <button class="tab" onclick="showTab('viva')">5. Viva questions</button>
+  </div>
+
+  <div id="tab-intuition">
+    <div class="card" style="margin-bottom: 10px;">
+      <div class="bold" style="margin-bottom: 6px;">The key analogy — a music equaliser</div>
+      <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.6;">
+        Imagine you're listening to music on a speaker with an equaliser (EQ). The EQ splits the audio into bands: <b style="color:var(--color-text-primary)">bass (low freq)</b>, <b style="color:var(--color-text-primary)">midrange</b>, <b style="color:var(--color-text-primary)">treble (high freq)</b>. 
+        Each knob tells you how much of that frequency is in the song right now.<br><br>
+        The Wavelet Transform does exactly this — but for your <b style="color:var(--color-text-primary)">accelerometer signal</b>. It splits the motion signal into frequency bands and tells you how much energy is in each band.
+      </div>
+    </div>
+
+    <canvas id="eq-canvas" class="signal-canvas" style="height:110px; margin-bottom:10px;"></canvas>
+
+    <div class="row" style="gap:8px;">
+      <div class="col card" style="border-left: 3px solid #8e5ff5;">
+        <div class="label">A4 band (0–0.6 Hz)</div>
+        <div class="bold">Slow drift</div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px;">Gravity, slow sway. Like the bass in music — the deep rumble.</div>
+      </div>
+      <div class="col card" style="border-left: 3px solid #2e86de;">
+        <div class="label">D3–D4 (0.6–2.5 Hz)</div>
+        <div class="bold">Walking rhythm</div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px;">1–2 steps/sec. Like midrange in music — the melody you hear.</div>
+      </div>
+      <div class="col card" style="border-left: 3px solid #e74c3c;">
+        <div class="label">D2 band (2.5–5 Hz)</div>
+        <div class="bold">Running impacts</div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px;">2–5 steps/sec. Like treble — sharp, fast, high energy.</div>
+      </div>
+    </div>
+
+    <div class="intuition-box" style="border-color: var(--color-border-info); background: var(--color-background-info); margin-top:10px;">
+      <b style="color:var(--color-text-info);">Key insight:</b> <span style="color:var(--color-text-info);">Each human activity creates a different "frequency fingerprint." Walking puts energy in low bands. Running puts energy in high bands. Standing puts energy in no bands. Wavelet transform reveals this fingerprint.</span>
+    </div>
+  </div>
+
+  <div id="tab-howit" style="display:none;">
+    <div class="bold" style="margin-bottom:10px;">How the DWT actually decomposes a signal</div>
+
+    <div class="step-box">
+      <div class="step-num">Step 1</div>
+      <div class="step-title">Start with raw signal (0–10 Hz at 20 Hz sampling)</div>
+      <div class="step-desc">Your accelerometer magnitude: √(x²+y²+z²). Contains all frequencies mixed together.</div>
+    </div>
+
+    <div style="text-align:center; font-size:18px; color:var(--color-text-tertiary); margin: 2px 0;">↓</div>
+
+    <div class="step-box" style="border: 0.5px solid var(--color-border-tertiary);">
+      <div class="step-num">Step 2 — First split (Low-pass + High-pass filters)</div>
+      <div class="step-title">Signal is split into two halves</div>
+      <div class="step-desc">
+        <b style="color:var(--color-text-primary);">A1</b> = Low frequencies (0–5 Hz) — smooth part<br>
+        <b style="color:var(--color-text-primary);">D1</b> = High frequencies (5–10 Hz) — fast detail → <b style="color: #e74c3c;">SAVED as sub-band D1</b>
+      </div>
+    </div>
+
+    <div style="text-align:center; font-size:18px; color:var(--color-text-tertiary); margin: 2px 0;">↓ (only A1 continues)</div>
+
+    <div class="step-box">
+      <div class="step-num">Step 3 — Second split</div>
+      <div class="step-title">A1 is split again</div>
+      <div class="step-desc">
+        <b style="color:var(--color-text-primary);">A2</b> = 0–2.5 Hz → continues<br>
+        <b style="color:var(--color-text-primary);">D2</b> = 2.5–5 Hz → <b style="color: #e74c3c;">SAVED as sub-band D2 (jogging lives here!)</b>
+      </div>
+    </div>
+
+    <div style="text-align:center; font-size:18px; color:var(--color-text-tertiary); margin: 2px 0;">↓</div>
+
+    <div class="step-box">
+      <div class="step-num">Step 4 — Third split</div>
+      <div class="step-title">A2 is split again</div>
+      <div class="step-desc">
+        <b style="color:var(--color-text-primary);">A3</b> = 0–1.25 Hz → continues<br>
+        <b style="color:var(--color-text-primary);">D3</b> = 1.25–2.5 Hz → <b style="color: #e74c3c;">SAVED as sub-band D3 (walking lives here!)</b>
+      </div>
+    </div>
+
+    <div style="text-align:center; font-size:18px; color:var(--color-text-tertiary); margin: 2px 0;">↓</div>
+
+    <div class="step-box">
+      <div class="step-num">Step 5 — Fourth split (final)</div>
+      <div class="step-title">A3 is split one last time</div>
+      <div class="step-desc">
+        <b style="color:var(--color-text-primary);">A4</b> = 0–0.6 Hz → <b style="color: #e74c3c;">SAVED (slow drift / gravity)</b><br>
+        <b style="color:var(--color-text-primary);">D4</b> = 0.6–1.25 Hz → <b style="color: #e74c3c;">SAVED (slow walking)</b>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:10px; background: var(--color-background-info);">
+      <div class="bold" style="color:var(--color-text-info); margin-bottom:4px;">Why Daubechies 4 (db4) wavelet?</div>
+      <div style="font-size:12px; color:var(--color-text-info); line-height:1.6;">
+        The db4 wavelet shape closely resembles a single footstep impact waveform — a sharp rise followed by a decay. This is called <b>wavelet-signal matching</b>. When the wavelet shape matches the signal shape, the DWT coefficients are large and meaningful. Using a wavelet that doesn't look like a footstep would give weak, noisy coefficients.
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-energy" style="display:none;">
+    <div class="bold" style="margin-bottom:8px;">What is "energy" in signal processing?</div>
+
+    <div class="card" style="margin-bottom:10px;">
+      <div style="font-size:12px; color:var(--color-text-secondary); line-height:1.7;">
+        In physics, energy = force × distance. In signal processing, we define energy similarly:<br><br>
+        <div style="text-align:center; font-size:15px; font-weight:500; color:var(--color-text-primary); padding: 8px; background: var(--color-background-secondary); border-radius: 6px; margin: 6px 0;">
+          Energy of a band = Σ (coefficient²) / number of samples
+        </div>
+        <br>
+        You square the coefficients because:
+        <ul style="margin: 4px 0; padding-left: 18px;">
+          <li>Squaring makes negative values positive (motion going up or down both contribute)</li>
+          <li>Squaring amplifies large values — a big footstep impact gives far more energy than a small vibration</li>
+          <li>It matches the physics definition of power (signal power = amplitude²)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="bold" style="margin-bottom:8px;">Why relative energy, not raw energy?</div>
+    <div class="card" style="margin-bottom:10px;">
+      <div style="font-size:12px; color:var(--color-text-secondary); line-height:1.6;">
+        A person running vigorously will have more raw energy everywhere compared to someone walking slowly — even in bands that shouldn't matter. So we normalise:<br><br>
+        <div style="text-align:center; font-size:14px; font-weight:500; color:var(--color-text-primary); padding:6px; background: var(--color-background-secondary); border-radius:6px; margin:6px 0;">
+          Relative Energy = Energy(band) / Total Energy across all bands
+        </div>
+        <br>
+        This gives you the <b style="color:var(--color-text-primary);">proportion</b> of total motion in each frequency band. Now a tall person and a short person walking normally show the same relative energy pattern — the fingerprint is person-independent.
+      </div>
+    </div>
+
+    <div class="bold" style="margin-bottom:8px;">How energy pattern → activity classification</div>
+    <div class="compare-grid">
+      <div class="compare-card">
+        <div class="compare-title">🚶 Walking</div>
+        <canvas id="c-walk" width="120" height="80"></canvas>
+        <div style="font-size:10px;color:var(--color-text-secondary);margin-top:4px;">D3 dominant<br>1–2 Hz rhythm</div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">🏃 Jogging</div>
+        <canvas id="c-jog" width="120" height="80"></canvas>
+        <div style="font-size:10px;color:var(--color-text-secondary);margin-top:4px;">D2 dominant<br>2–4 Hz rhythm</div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">🧍 Standing</div>
+        <canvas id="c-stand" width="120" height="80"></canvas>
+        <div style="font-size:10px;color:var(--color-text-secondary);margin-top:4px;">A4 dominant<br>just gravity</div>
+      </div>
+    </div>
+    <div class="intuition-box" style="border-color:var(--color-border-success);background:var(--color-background-success); margin-top:10px;">
+      <b style="color:var(--color-text-success);">The classifier rule:</b> <span style="color:var(--color-text-success);">Look at which band has the highest relative energy. That band's frequency range tells you the activity's step rate.</span>
+    </div>
+  </div>
+
+  <div id="tab-live" style="display:none;">
+    <div class="label" style="margin-bottom:8px;">Simulate an activity and watch the wavelet energy bars change in real-time</div>
+    <div class="tabs" style="margin-bottom:10px;">
+      <button class="tab active" id="btn-walk" onclick="setActivity('walk')">Walking</button>
+      <button class="tab" id="btn-jog" onclick="setActivity('jog')">Jogging</button>
+      <button class="tab" id="btn-stand" onclick="setActivity('stand')">Standing</button>
+      <button class="tab" id="btn-run" onclick="setActivity('run')">Running</button>
+    </div>
+
+    <canvas id="live-signal" style="width:100%;height:80px;display:block;border-radius:6px;border:0.5px solid var(--color-border-tertiary);margin-bottom:12px;"></canvas>
+
+    <div class="bold" style="margin-bottom:6px;">Wavelet sub-band energy (relative)</div>
+    <div class="band-bar-wrap" id="energy-bars"></div>
+
+    <div style="margin-top:14px;display:flex;align-items:center;gap:12px;">
+      <div class="label" style="margin:0;width:120px;">Detected activity</div>
+      <span class="activity-badge" id="activity-label" style="background:var(--color-background-info);color:var(--color-text-info);">Walking</span>
+    </div>
+    <div style="margin-top:6px;font-size:11px;color:var(--color-text-tertiary);" id="classifier-reason">D3 band dominant → step frequency 1.25–2.5 Hz → Walking</div>
+  </div>
+
+  <div id="tab-viva" style="display:none;">
+    <div id="viva-list"></div>
+  </div>
+</div>
+
+<script>
+const BANDS = [
+  { key:'A4', label:'A4  0–0.6 Hz',  color:'#8e5ff5' },
+  { key:'D4', label:'D4  0.6–1.25 Hz', color:'#2e86de' },
+  { key:'D3', label:'D3  1.25–2.5 Hz', color:'#27ae60' },
+  { key:'D2', label:'D2  2.5–5 Hz',  color:'#e67e22' },
+  { key:'D1', label:'D1  5–10 Hz',   color:'#e74c3c' },
+];
+
+const ACTIVITIES = {
+  walk:  { energy: {A4:0.04, D4:0.10, D3:0.55, D2:0.25, D1:0.06}, freq:1.6, amp:2.5, label:'Walking', reason:'D3 band dominant → step frequency 1.25–2.5 Hz → Walking', badge:'info' },
+  jog:   { energy: {A4:0.02, D4:0.05, D3:0.18, D2:0.62, D1:0.13}, freq:2.8, amp:5.0, label:'Jogging', reason:'D2 band dominant → step frequency 2.5–5 Hz → Jogging', badge:'warning' },
+  stand: { energy: {A4:0.78, D4:0.12, D3:0.05, D2:0.03, D1:0.02}, freq:0.1, amp:0.3, label:'Standing', reason:'A4 band dominant → near-zero step frequency → Standing', badge:'success' },
+  run:   { energy: {A4:0.01, D4:0.03, D3:0.10, D2:0.48, D1:0.38}, freq:4.2, amp:7.5, label:'Running fast', reason:'D2+D1 both high → step frequency >4 Hz → Running fast', badge:'danger' },
+};
+
+let currentActivity = 'walk';
+let t = 0;
+
+function buildBars() {
+  const el = document.getElementById('energy-bars');
+  el.innerHTML = '';
+  BANDS.forEach(b => {
+    el.innerHTML += `<div class="band-row">
+      <span class="band-label">${b.label}</span>
+      <div class="band-track"><div class="band-fill" id="fill-${b.key}" style="background:${b.color};width:0%"></div></div>
+      <span class="band-val" id="val-${b.key}">0%</span>
+    </div>`;
+  });
+}
+
+function updateBars(act) {
+  const e = ACTIVITIES[act].energy;
+  BANDS.forEach(b => {
+    const pct = Math.round(e[b.key]*100);
+    document.getElementById('fill-'+b.key).style.width = pct+'%';
+    document.getElementById('val-'+b.key).textContent = pct+'%';
+  });
+  const info = ACTIVITIES[act];
+  const badge = document.getElementById('activity-label');
+  badge.textContent = info.label;
+  badge.style.background = `var(--color-background-${info.badge})`;
+  badge.style.color = `var(--color-text-${info.badge})`;
+  document.getElementById('classifier-reason').textContent = info.reason;
+}
+
+function setActivity(act) {
+  currentActivity = act;
+  ['walk','jog','stand','run'].forEach(a => {
+    document.getElementById('btn-'+a).classList.toggle('active', a===act);
+  });
+  updateBars(act);
+}
+
+function drawLiveSignal() {
+  const canvas = document.getElementById('live-signal');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * devicePixelRatio;
+  canvas.height = 80 * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const W = canvas.offsetWidth, H = 80;
+  ctx.clearRect(0,0,W,H);
+
+  const act = ACTIVITIES[currentActivity];
+  const freq = act.freq, amp = act.amp;
+  const mid = H/2;
+  const noise = 0.4;
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#2e86de';
+  ctx.lineWidth = 1.5;
+  const pts = 120;
+  for (let i=0; i<=pts; i++) {
+    const x = (i/pts)*W;
+    const tt = t + i*0.12;
+    let y = mid - amp * Math.sin(2*Math.PI*freq*tt/20);
+    if (freq > 0.5) y -= (amp*0.3)*Math.abs(Math.sin(2*Math.PI*freq*tt/20));
+    y += noise*(Math.random()-0.5)*4;
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  t += 0.5;
+}
+
+function drawMiniBar(canvasId, energies) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 120, H = 80;
+  canvas.width = W; canvas.height = H;
+  const colors = ['#8e5ff5','#2e86de','#27ae60','#e67e22','#e74c3c'];
+  const bw = (W-16)/5;
+  energies.forEach((v,i) => {
+    const bh = v*(H-10);
+    ctx.fillStyle = colors[i];
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(8+i*(bw+2), H-bh-5, bw, bh);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawEQCanvas() {
+  const canvas = document.getElementById('eq-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 600, H = 110;
+  canvas.width = W * devicePixelRatio; canvas.height = H * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const colors = ['#8e5ff5','#2e86de','#27ae60','#e67e22','#e74c3c'];
+  const labels = ['A4\n0-0.6Hz','D4\n0.6-1.25Hz','D3\n1.25-2.5Hz','D2\n2.5-5Hz','D1\n5-10Hz'];
+  const heights = [20, 45, 85, 60, 30];
+  const bw = (W-40)/5;
+  labels.forEach((l,i) => {
+    const x = 20 + i*(bw+4);
+    const bh = heights[i];
+    ctx.fillStyle = colors[i];
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.roundRect(x, H-bh-24, bw, bh, 4);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#888';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    l.split('\n').forEach((line,li) => ctx.fillText(line, x+bw/2, H-4+li*11));
+  });
+  ctx.fillStyle = '#aaa';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('← Lower frequencies (slow motion)         Higher frequencies (fast impacts) →', 20, 14);
+}
+
+const VIVA_QA = [
+  { q:'What is wavelet energy and why do we compute it?', a:'Energy = Σ(coefficient²) / N for each sub-band. Squaring makes negatives positive and amplifies large impacts. It measures how much of the total signal power lives in that frequency range. We use it because different activities have different energy distributions across frequency bands — it is their "fingerprint."' },
+  { q:'Why relative energy and not raw energy?', a:'Raw energy depends on how vigorously a person moves. A fast walker may have more raw energy in all bands than a slow runner. Relative energy normalises: Energy(band) / Total Energy. This gives the proportion in each band, making the pattern person-independent and scale-independent.' },
+  { q:'What is the Daubechies wavelet and why db4?', a:'Daubechies wavelets are a family of compactly supported orthogonal wavelets. "db4" has 4 vanishing moments, making it smooth and asymmetric. Its shape closely resembles a single footstep impact pulse — a property called wavelet-signal matching. When the wavelet shape matches the signal, the DWT coefficients are maximally large and meaningful.' },
+  { q:'What is the difference between FFT and Wavelet Transform?', a:'FFT gives you global frequency content — which frequencies exist across the entire signal, but not when. Wavelet gives you time-frequency localisation — which frequencies exist at each moment in time. For human motion, activities can change over time, so wavelet is more powerful. FFT also uses a fixed window; wavelets use variable-length windows (narrow for high freq, wide for low freq).' },
+  { q:'Why does jogging show high energy in D2 (2.5–5 Hz) specifically?', a:'Jogging cadence is typically 140–170 steps/min = 2.3–2.8 Hz. This falls squarely in the D2 sub-band (2.5–5 Hz). Additionally, jogging involves hard heel-strikes that create sharp, high-amplitude impacts — these sharp transients contribute significant energy to higher frequency bands. Walking is gentler and slower, so its energy stays in D3 (1.25–2.5 Hz).' },
+  { q:'Why does standing show almost all energy in A4 (0–0.6 Hz)?', a:'A standing person has no rhythmic stepping. The only signal is: (1) gravity (a constant ≈9.8 m/s²), and (2) very slow body sway (micro-balance corrections at < 0.5 Hz). Both are captured entirely in the A4 approximation band. The detail bands D1–D4 are essentially noise because there is no rhythmic motion at those frequencies.' },
+  { q:'What does it mean when D1 (5–10 Hz) has high energy?', a:'D1 captures very fast transients — either high-frequency sensor noise, or very hard, sharp impacts like running fast or jumping. In normal walking, D1 is near zero. A spike in D1 signals aggressive, fast motion or a sensor artifact. It helps distinguish running from jogging.' },
+  { q:'How many levels of DWT decomposition do we use and why?', a:'We use 4 levels. At 20 Hz sampling, 4 levels gives sub-bands down to 0–0.625 Hz (A4), which is fine enough to separate standing (< 0.5 Hz) from slow walking (0.6–1.25 Hz). Fewer levels lose resolution in low frequencies; more levels produce sub-bands finer than physically meaningful for human motion at 20 Hz.' },
+];
+
+function buildViva() {
+  const el = document.getElementById('viva-list');
+  el.innerHTML = VIVA_QA.map((qa,i) => `
+    <div class="step-box" style="cursor:pointer;" onclick="toggleViva(${i})">
+      <div class="step-num">Q${i+1}</div>
+      <div class="step-title">${qa.q}</div>
+      <div id="va-${i}" style="display:none;margin-top:8px;font-size:12px;color:var(--color-text-secondary);line-height:1.6;border-top:0.5px solid var(--color-border-tertiary);padding-top:8px;">${qa.a}</div>
+    </div>`).join('');
+}
+
+function toggleViva(i) {
+  const el = document.getElementById('va-'+i);
+  el.style.display = el.style.display==='none'?'block':'none';
+}
+
+function showTab(name) {
+  ['intuition','howit','energy','live','viva'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===name?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach((b,i) => {
+    const names = ['intuition','howit','energy','live','viva'];
+    b.classList.toggle('active', names[i]===name);
+  });
+  if (name==='live') { buildBars(); updateBars(currentActivity); }
+  if (name==='energy') {
+    setTimeout(()=>{
+      drawMiniBar('c-walk', [0.04,0.10,0.55,0.25,0.06]);
+      drawMiniBar('c-jog',  [0.02,0.05,0.18,0.62,0.13]);
+      drawMiniBar('c-stand',[0.78,0.12,0.05,0.03,0.02]);
+    }, 50);
+  }
+}
+
+buildViva();
+drawEQCanvas();
+
+let rafId;
+function liveLoop() {
+  const tab = document.getElementById('tab-live');
+  if (tab && tab.style.display !== 'none') drawLiveSignal();
+  rafId = requestAnimationFrame(liveLoop);
+}
+liveLoop();
+</script>
